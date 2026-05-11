@@ -10,23 +10,40 @@ import SwiftData
 
 @main
 struct PresenceApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
+    // Tracks if the user has finished the onboarding flow
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @State private var showSplash: Bool = true
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ZStack {
+                if hasCompletedOnboarding {
+                    MainTabView()
+                } else {
+                    OnboardingView()
+                }
+                
+                if showSplash {
+                    LaunchScreenView()
+                        .transition(.opacity)
+                        .zIndex(1)
+                }
+            }
+            .task {
+                // Keep splash visible for 2 seconds for a calm entry
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                withAnimation(.easeOut(duration: 0.8)) {
+                    showSplash = false
+                }
+            }
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(
+            for: [
+                ReflectionEntry.self,
+                BehaviorSummary.self,
+                RecoveryInsight.self,
+                AnalyticsSnapshot.self
+            ]
+        )
     }
 }
