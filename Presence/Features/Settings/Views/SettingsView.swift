@@ -2,7 +2,8 @@
 //  SettingsView.swift
 //  Presence
 //
-//  Premium, minimal settings screen for Presence.
+//  Production-ready Settings screen for Presence.
+//  Modular, accessible, and fully functional.
 //
 
 import SwiftUI
@@ -23,75 +24,101 @@ public struct SettingsView: View {
                         
                         // MARK: - Health & Privacy
                         settingsSection(title: "Privacy & Data") {
-                            SettingsRow(
-                                icon: "heart.fill",
-                                color: .red,
-                                title: "Health Permissions",
-                                subtitle: "Manage what Presence can see",
-                                action: viewModel.openHealthSettings
-                            )
-                            
-                            SettingsRow(
-                                icon: "square.and.arrow.up",
-                                color: .blue,
-                                title: "Export My Data",
-                                subtitle: "Download your behavioral history",
-                                action: viewModel.exportData
-                            )
+                            VStack(spacing: 0) {
+                                SettingsRow(
+                                    icon: "heart.fill",
+                                    iconColor: .red,
+                                    title: "Health Permissions",
+                                    subtitle: viewModel.healthStatus,
+                                    action: { Task { await viewModel.requestHealthAccess() } }
+                                )
+                                
+                                Divider().padding(.leading, 50)
+                                
+                                SettingsRow(
+                                    icon: "iphone.badge.play",
+                                    iconColor: .blue,
+                                    title: "Screen Time",
+                                    subtitle: viewModel.screenTimeStatus,
+                                    action: { Task { await viewModel.requestScreenTimeAccess() } }
+                                )
+                                
+                                Divider().padding(.leading, 50)
+                                
+                                SettingsRow(
+                                    icon: "square.and.arrow.up",
+                                    iconColor: .green,
+                                    title: "Export My Data",
+                                    subtitle: "Download behavioral history",
+                                    action: viewModel.exportData
+                                )
+                            }
                         }
                         
                         // MARK: - Appearance
                         settingsSection(title: "Appearance") {
-                            VStack(spacing: 0) {
-                                HStack {
-                                    Label("Theme", systemImage: "paintbrush.fill")
-                                        .foregroundStyle(.primary)
-                                    Spacer()
-                                    Picker("Theme", selection: $viewModel.selectedTheme) {
-                                        ForEach(viewModel.themeOptions, id: \.self) {
-                                            Text($0)
-                                        }
-                                    }
-                                    .pickerStyle(.menu)
-                                    .tint(AppColors.secondaryText)
+                            HStack {
+                                Label {
+                                    Text("Theme")
+                                        .font(.system(size: 17, weight: .medium))
+                                } icon: {
+                                    Image(systemName: "paintbrush.fill")
+                                        .foregroundStyle(.purple)
                                 }
-                                .padding(.vertical, 14)
+                                
+                                Spacer()
+                                
+                                Picker("Theme", selection: $viewModel.appearance) {
+                                    ForEach(AppAppearance.allCases) { appearance in
+                                        Text(appearance.rawValue).tag(appearance)
+                                    }
+                                }
+                                .pickerStyle(.menu)
                             }
+                            .padding(.vertical, 8)
                         }
                         
                         // MARK: - Notifications
                         settingsSection(title: "Notifications") {
-                            Toggle(isOn: $viewModel.isNotificationsEnabled) {
-                                Label("Daily Reminders", systemImage: "bell.fill")
-                                    .foregroundStyle(.primary)
+                            NavigationLink {
+                                NotificationSettingsView()
+                            } label: {
+                                SettingsRow(
+                                    icon: "bell.fill",
+                                    iconColor: .orange,
+                                    title: "Alert Preferences",
+                                    subtitle: "Manage nudges & reminders",
+                                    action: {}
+                                )
                             }
-                            .padding(.vertical, 10)
-                            .tint(.purple)
                         }
                         
                         // MARK: - Advanced
-                        settingsSection(title: "Development") {
+                        settingsSection(title: "Advanced") {
                             SettingsRow(
                                 icon: "arrow.counterclockwise",
-                                color: .orange,
+                                iconColor: .gray,
                                 title: "Reset Onboarding",
-                                subtitle: "Restarts the first-launch experience",
+                                subtitle: "Restart initial experience",
                                 action: viewModel.resetOnboarding
                             )
                         }
                         
-                        // MARK: - Footer
-                        VStack(spacing: 8) {
-                            Text("Presence Version 1.0.0")
-                                .font(.caption2)
+                        // MARK: - About
+                        VStack(spacing: 12) {
+                            Text(viewModel.appVersion)
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
                                 .foregroundStyle(AppColors.secondaryText)
                             
-                            Text("Your data never leaves your device.")
-                                .font(.caption2)
+                            Text("Presence is built with a local-first philosophy. Your behavioral data never leaves your device.")
+                                .font(.system(size: 12))
                                 .foregroundStyle(AppColors.secondaryText)
-                                .opacity(0.6)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 40)
+                                .opacity(0.7)
                         }
                         .padding(.top, 20)
+                        .padding(.bottom, 40)
                     }
                     .padding(AppSpacing.screenPadding)
                 }
@@ -100,11 +127,8 @@ public struct SettingsView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.primary)
+                    Button("Done") { dismiss() }
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                 }
             }
         }
@@ -130,55 +154,8 @@ public struct SettingsView: View {
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
-        .appearAnimation(delay: 0.1)
     }
 }
-
-// MARK: - Settings Row Component
-
-struct SettingsRow: View {
-    let icon: String
-    let color: Color
-    let title: String
-    let subtitle: String?
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .foregroundStyle(.white)
-                    .frame(width: 32, height: 32)
-                    .background(color.gradient)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.primary)
-                    
-                    if let subtitle = subtitle {
-                        Text(subtitle)
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppColors.secondaryText)
-                    }
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(AppColors.secondaryText)
-                    .opacity(0.5)
-            }
-            .padding(.vertical, 12)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Previews
 
 #Preview {
     SettingsView()

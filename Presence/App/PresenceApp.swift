@@ -11,13 +11,13 @@ import SwiftData
 @main
 struct PresenceApp: App {
     // Tracks if the user has finished the onboarding flow
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @State private var settings = SettingsService.shared
     @State private var showSplash: Bool = true
     
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if hasCompletedOnboarding {
+                if settings.isOnboardingComplete {
                     MainTabView()
                 } else {
                     OnboardingView()
@@ -29,6 +29,7 @@ struct PresenceApp: App {
                         .zIndex(1)
                 }
             }
+            .preferredColorScheme(settings.appearance.colorScheme)
             .task {
                 // Keep splash visible for 2 seconds for a calm entry
                 try? await Task.sleep(nanoseconds: 2_000_000_000)

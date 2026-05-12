@@ -37,7 +37,7 @@ struct FloatingTabBar: View {
                     }
                     .foregroundStyle(
                         selectedTab == tab
-                        ? Color.white
+                        ? Color.primary
                         : AppColors.secondaryText
                     )
                     .frame(maxWidth: .infinity)

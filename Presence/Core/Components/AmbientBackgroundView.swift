@@ -2,27 +2,31 @@ import SwiftUI
 
 
 public struct AmbientBackgroundView: View {
+    @Environment(\.colorScheme) var colorScheme
     @State private var isAnimating = false
     
-   
     var topOrbColor: Color
     var bottomOrbColor: Color
     var accentOrbColor: Color
     
     public init(
-        topOrbColor: Color = Color.indigo.opacity(0.2),
-        bottomOrbColor: Color = Color.teal.opacity(0.2),
-        accentOrbColor: Color = Color.purple.opacity(0.15)
+        topOrbColor: Color = Color.indigo,
+        bottomOrbColor: Color = Color.teal,
+        accentOrbColor: Color = Color.purple
     ) {
         self.topOrbColor = topOrbColor
         self.bottomOrbColor = bottomOrbColor
         self.accentOrbColor = accentOrbColor
     }
     
+    private var baseOpacity: Double {
+        colorScheme == .dark ? 0.2 : 0.12
+    }
+    
     public var body: some View {
         ZStack {
             
-            Color(.systemBackground)
+            Color(uiColor: .systemBackground)
                 .ignoresSafeArea()
             
             GeometryReader { proxy in
@@ -32,7 +36,7 @@ public struct AmbientBackgroundView: View {
                 ZStack {
                     
                     Circle()
-                        .fill(topOrbColor)
+                        .fill(topOrbColor.opacity(baseOpacity))
                         .frame(width: width * 0.9, height: width * 0.9)
                         .position(
                             x: isAnimating ? width * 0.7 : width * 0.3,
@@ -42,7 +46,7 @@ public struct AmbientBackgroundView: View {
                     
                    
                     Circle()
-                        .fill(bottomOrbColor)
+                        .fill(bottomOrbColor.opacity(baseOpacity))
                         .frame(width: width * 1.0, height: width * 1.0)
                         .position(
                             x: isAnimating ? width * 0.2 : width * 0.8,
@@ -52,7 +56,7 @@ public struct AmbientBackgroundView: View {
                     
                     
                     Ellipse()
-                        .fill(accentOrbColor)
+                        .fill(accentOrbColor.opacity(baseOpacity * 0.8))
                         .frame(width: width * 0.8, height: height * 0.6)
                         .position(
                             x: isAnimating ? width * 0.4 : width * 0.6,

@@ -49,8 +49,8 @@ public final class OnboardingViewModel {
     
     /// Flags the onboarding process as finished.
     public func completeOnboarding() {
-        // Persist the state so PresenceApp skips onboarding on next launch
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        // Persist the state through the central service
+        SettingsService.shared.isOnboardingComplete = true
         
         withAnimation {
             hasCompletedOnboarding = true

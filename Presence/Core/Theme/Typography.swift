@@ -19,4 +19,6 @@ enum Typography {
     static let headline = Font.headline
     
     static let subheadline = Font.subheadline
+    
+    static let body = Font.body
 }

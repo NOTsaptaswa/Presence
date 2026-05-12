@@ -2,19 +2,23 @@
 //  AppColors.swift
 //  Presence
 //
-//  Created by Saptaswa Nandi on 09/05/26.
+//  Dynamic color tokens for Presence.
+//  Uses system adaptive colors to support both Light and Dark mode.
 //
-
 
 import SwiftUI
 
 enum AppColors {
     
-    static let background = Color.black
+    /// The primary background color (Adaptive)
+    static let background = Color(uiColor: .systemBackground)
     
-    static let cardBackground = Color.white.opacity(0.06)
+    /// Semi-transparent card background that works on both themes
+    static let cardBackground = Color.primary.opacity(0.08)
     
-    static let secondaryText = Color.white.opacity(0.65)
+    /// Adaptive secondary text
+    static let secondaryText = Color.secondary
     
-    static let accent = Color.white
+    /// Primary accent color
+    static let accent = Color.primary
 }

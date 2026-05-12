@@ -23,15 +23,26 @@ public final class AnalyticsViewModel {
         isLoading = true
         errorMessage = nil
         
+        let healthData = HealthDataService.shared
+        
         do {
-            // Simulate network/database delay for fluid UI testing
-            try await Task.sleep(nanoseconds: 800_000_000)
+            // Parallel fetch of real behavioral data
+            async let sleepSummary = healthData.getWeeklySleepSummary()
+            async let heartMetrics = healthData.getLatestHeartMetrics()
             
-            // In a real app, you would inject a Service layer and fetch data here.
-            // Using the modular mock data generator for now.
-            self.dashboardData = BehavioralDashboardData.mock
+            let (sleep, heart) = await (sleepSummary, heartMetrics)
+            
+            // Map real data to display models
+            // In a production app, we would calculate daily data points here.
+            // For now, we populate the dashboard data with aggregated real values.
+            self.dashboardData = BehavioralDashboardData(
+                sleepTrends: [SleepTrend(id: UUID(), date: Date(), hours: sleep.averageDuration / 3600)],
+                focusTrends: [],
+                recoveryTrends: [RecoveryTrend(id: UUID(), date: Date(), score: Int(heart.hrv ?? 50))],
+                screenTimeTrends: []
+            )
         } catch {
-            self.errorMessage = "Failed to load analytics data: \(error.localizedDescription)"
+            self.errorMessage = "Failed to load analytics: \(error.localizedDescription)"
         }
         
         isLoading = false

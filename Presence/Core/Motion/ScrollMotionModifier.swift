@@ -45,7 +45,8 @@ private struct ScrollFadeEffectModifier: ViewModifier {
     func body(content: Content) -> some View {
         GeometryReader { geometry in
             let frame = geometry.frame(in: .named("scrollMotion"))
-            let screenHeight = UIScreen.main.bounds.height
+            let containerHeight = geometry.safeAreaInsets.top + geometry.size.height + geometry.safeAreaInsets.bottom
+            let screenHeight = containerHeight
             
             // Calculate normalized progress (0 = fully off-screen, 1 = fully visible)
             let bottomProgress = min(
@@ -74,8 +75,9 @@ struct ScrollParallaxModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         GeometryReader { geometry in
-            let frame = geometry.frame(in: .global)
-            let screenMid = UIScreen.main.bounds.height / 2
+            let frame = geometry.frame(in: .named("scrollMotion"))
+            let containerHeight = geometry.safeAreaInsets.top + geometry.size.height + geometry.safeAreaInsets.bottom
+            let screenMid = containerHeight / 2
             let offset = (frame.midY - screenMid) * strength
             
             content
@@ -99,8 +101,9 @@ struct ScrollScaleModifier: ViewModifier {
     
     func body(content: Content) -> some View {
         GeometryReader { geometry in
-            let frame = geometry.frame(in: .global)
-            let screenMid = UIScreen.main.bounds.height / 2
+            let frame = geometry.frame(in: .named("scrollMotion"))
+            let containerHeight = geometry.safeAreaInsets.top + geometry.size.height + geometry.safeAreaInsets.bottom
+            let screenMid = containerHeight / 2
             let distanceFromCenter = abs(frame.midY - screenMid)
             let maxDistance = screenMid
             

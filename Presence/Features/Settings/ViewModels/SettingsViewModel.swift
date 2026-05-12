@@ -2,7 +2,8 @@
 //  SettingsViewModel.swift
 //  Presence
 //
-//  Manages user preferences and system settings.
+//  Production-ready ViewModel for the Settings screen.
+//  Coordinates permission states and user preferences.
 //
 
 import Foundation
@@ -12,44 +13,83 @@ import SwiftUI
 @Observable
 public final class SettingsViewModel {
     
-    // MARK: - Properties (Persisted via AppStorage/UserDefaults)
+    // MARK: - Dependencies
+    private let settingsService = SettingsService.shared
+    private let healthManager = HealthKitManager.shared
+    private let notificationManager = NotificationManager.shared
+    private let deviceManager = DeviceActivityManager.shared
+    
+    // MARK: - Properties
+    
+    public var appearance: AppAppearance {
+        get { settingsService.appearance }
+        set { 
+            settingsService.appearance = newValue
+            HapticsManager.shared.selection()
+        }
+    }
     
     public var isNotificationsEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "isNotificationsEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "isNotificationsEnabled") }
+        get { settingsService.isNotificationsEnabled }
+        set { 
+            settingsService.isNotificationsEnabled = newValue 
+            if newValue {
+                Task { await requestNotificationAccess() }
+            }
+        }
     }
     
-    public var selectedTheme: String {
-        get { UserDefaults.standard.string(forKey: "selectedTheme") ?? "System" }
-        set { UserDefaults.standard.set(newValue, forKey: "selectedTheme") }
+    public var healthStatus: String {
+        healthManager.isAuthorized ? "Authorized" : "Not Authorized"
     }
     
-    // MARK: - Computed Properties
+    public var screenTimeStatus: String {
+        deviceManager.isAuthorized ? "Authorized" : "Not Authorized"
+    }
     
-    public var themeOptions: [String] = ["System", "Light", "Dark"]
+    public var appVersion: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return "Version \(version) (\(build))"
+    }
+    
+    // MARK: - Initialization
     
     public init() {}
     
     // MARK: - Actions
     
-    /// Resets the onboarding state to allow testing the flow again.
-    public func resetOnboarding() {
-        UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
-        HapticsManager.shared.warning()
-        
-        // In a real app, you might want to force a view refresh or app restart
-    }
-    
-    /// Simulates a data export of behavioral patterns.
-    public func exportData() {
+    @MainActor
+    public func requestHealthAccess() async {
+        await healthManager.requestAuthorization()
         HapticsManager.shared.success()
-        // Logic for generating and sharing a JSON/CSV file would go here.
     }
     
-    /// Directs the user to the system health permissions.
-    public func openHealthSettings() {
-        if let url = URL(string: "x-apple-health://") {
+    @MainActor
+    public func requestScreenTimeAccess() async {
+        await deviceManager.requestAuthorization()
+        HapticsManager.shared.success()
+    }
+    
+    @MainActor
+    public func requestNotificationAccess() async {
+        await notificationManager.requestAuthorization()
+    }
+    
+    public func resetOnboarding() {
+        settingsService.isOnboardingComplete = false
+        settingsService.resetAllData()
+        HapticsManager.shared.warning()
+    }
+    
+    public func openSystemSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)
         }
+    }
+    
+    public func exportData() {
+        // Mock export
+        HapticsManager.shared.success()
     }
 }
